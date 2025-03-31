@@ -1,6 +1,6 @@
 package com.ian.account.domain;
 
-import com.ian.account.type.AccounStatus;
+import com.ian.account.type.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -33,7 +33,7 @@ public class Account {
     private String accountNumber; // 계좌 번호
 
     @Enumerated(EnumType.STRING)
-    private AccounStatus accounStatus; // 계좌 상태 (사용/해지)
+    private AccountStatus accountStatus; // 계좌 상태 (사용/해지)
 
     private Long balance; // 잔액
     private LocalDateTime accountCreatedAt; // 계좌 등록 일시
