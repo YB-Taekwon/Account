@@ -17,12 +17,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,6 +44,27 @@ class AccountControllerTest {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Test
+    void getAccountsTest() throws Exception {
+        List<AccountDTO> accountDTOList = Arrays.asList(
+                AccountDTO.builder().accountNumber("1234567890").balance(1000L).build(),
+                AccountDTO.builder().accountNumber("1111111111").balance(2000L).build(),
+                AccountDTO.builder().accountNumber("1010101010").balance(3000L).build()
+        );
+
+        given(accountService.getAccountsByUserId(anyLong())).willReturn(accountDTOList);
+
+        mockMvc.perform(get("/account?userId=1"))
+                .andDo(print())
+                .andExpect(jsonPath("$[0].accountNumber").value("1234567890"))
+                .andExpect(jsonPath("$[0].balance").value("1000"))
+                .andExpect(jsonPath("$[1].accountNumber").value("1111111111"))
+                .andExpect(jsonPath("$[1].balance").value("2000"))
+                .andExpect(jsonPath("$[2].accountNumber").value("1010101010"))
+                .andExpect(jsonPath("$[2].balance").value("3000"));
+    }
+
 
     @Test
     void createAccountTest() throws Exception {
