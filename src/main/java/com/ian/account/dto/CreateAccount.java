@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 계좌 생성을 위해 클라이언트로부터 요청받는 Request와 계좌 생성 후 클라이언트에게 응답하는 Response 모두
  * 계좌 생성 기능에 관련되어 있기 때문에 CreateAccount 클래스의 중첩(static) 클래스로 관리한다.
  * Request: 사용자 아이디, 초기 잔액
- * Response: 사용자 아이디, 계좌번호, 등록 일시
+ * Response: 사용자 아이디, 계좌번호, 계좌 생성 일시
  */
 public class CreateAccount {
 
@@ -21,11 +21,11 @@ public class CreateAccount {
     public static class Request {
         @NotNull
         @Min(1)
-        private Long userId;
+        private Long userId; // 사용자 아이디
 
         @NotNull
         @Min(0)
-        private Long initialBalance;
+        private Long initialBalance; // 초기 잔액
     }
 
 
@@ -35,9 +35,9 @@ public class CreateAccount {
     @AllArgsConstructor
     @Builder
     public static class Response {
-        private Long userId;
-        private String accountNumber;
-        private LocalDateTime accountCreatedAt;
+        private Long userId; // 사용자 아이디
+        private String accountNumber; // 계좌 번호
+        private LocalDateTime accountCreatedAt; // 계좌 생성 일시
 
         public static Response from(AccountDTO accountDTO) {
             return Response.builder()

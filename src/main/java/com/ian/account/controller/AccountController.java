@@ -8,6 +8,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
+/**
+ * 계좌 관련 컨트롤러
+ * 1. 계좌 확인
+ * 2. 계좌 생성
+ * 3. 계좌 해지
+ */
 @RestController
 @RequiredArgsConstructor
 public class AccountController {
@@ -41,7 +48,7 @@ public class AccountController {
      * 계좌 생성 API
      * POST /account
      * 파라미터: 사용자 아이디, 초기 잔액
-     * 실패: 사용자가 업는 경우, 보유 계좌가 10개 이상인 경우
+     * 실패: 사용자가 없는 경우, 보유 계좌가 10개 이상인 경우
      * 성공: 사용자 아이디, 계좌 번호, 등록 일시 반환
      */
     @PostMapping("/account")

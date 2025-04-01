@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * 계좌 생성을 위해 클라이언트로부터 요청받는 Request와 계좌 생성 후 클라이언트에게 응답하는 Response 모두
  * 계좌 생성 기능에 관련되어 있기 때문에 CreateAccount 클래스의 중첩(static) 클래스로 관리한다.
  * Request: 사용자 아이디, 계좌 번호
- * Response: 사용자 아이디, 계좌 번호, 해지 일시
+ * Response: 사용자 아이디, 계좌 번호, 계좌 해지 일시
  */
 public class DeleteAccount {
 
@@ -23,11 +23,11 @@ public class DeleteAccount {
     public static class Request {
         @NotNull
         @Min(1)
-        private Long userId;
+        private Long userId; // 사용자 아이디
 
         @NotBlank
         @Size(min = 10, max = 10)
-        private String accountNumber;
+        private String accountNumber; // 계좌 번호
     }
 
 
@@ -37,9 +37,9 @@ public class DeleteAccount {
     @AllArgsConstructor
     @Builder
     public static class Response {
-        private Long userId;
-        private String accountNumber;
-        private LocalDateTime accountCancelledAt;
+        private Long userId; // 사용자 아이디
+        private String accountNumber; // 계좌 번호
+        private LocalDateTime accountCancelledAt; // 계좌 해지 일시
 
         public static Response from(AccountDTO accountDTO) {
             return Response.builder()
