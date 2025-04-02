@@ -5,7 +5,17 @@ Content-Type: application/json
 {
   "userId": 1,
   "accountNumber": "1000000000",
-  "amount": 10000
+  "amount": 1000
+}
+
+### UseBalance2
+POST http://localhost:8080/transaction/use
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "accountNumber": "1000000000",
+  "amount": 1000
 }
 
 
@@ -14,12 +24,12 @@ POST http://localhost:8080/transaction/cancel
 Content-Type: application/json
 
 {
-  "transactionId": "657ee9aea93d41ba9fe430cabd3a3a77",
+  "transactionId": "51fdf8543c434b89857a4ad3f88d039d",
   "accountNumber": "1000000000",
   "amount": 1000
 }
 
 
 ### GetTransactions
-GET http://localhost:8080/transaction/4801535910a14b7fbdad548a409fde3a
+GET http://localhost:8080/transaction/51fdf8543c434b89857a4ad3f88d039d
 Content-Type: application/json

@@ -39,7 +39,8 @@ public class TransactionService {
      * 2. 사용자와 계좌의 소유주 정보가 일치하지 않는 경우
      * 3. 계좌가 해지 상태인 경우
      * 4. 거래 금액이 잔액보다 큰 경우
-     * 5. 해당 계좌에서 거래(사용, 사용 취소)가 이미 진행 중인 경우 (다른 거래 요청이 오는 경우, 해당 거래가 동시에 잘못 처리되는 것을 방지)
+     * 5. 해당 계좌에서 거래(사용, 사용 취소)가 이미 진행 중인 경우 -> Redis로 동시성 제어 완료
+     * (다른 거래 요청이 오는 경우, 해당 거래가 동시에 잘못 처리되는 것을 방지)
      * 거래 금액이 너무 작거나 큰 경우 -> Entity: @Min, @Max + Controller: @Valid 애너테이션으로 유효성 검사 완료
      */
     // 잔액 사용
@@ -71,7 +72,6 @@ public class TransactionService {
         // 4. 거래 금액이 잔액보다 큰 경우 예외 발생
         if (account.getBalance() < amount)
             throw new AccountException(BALANCE_EXCEEDED);
-        // 5. 해당 계좌에서 거래(사용, 사용 취소)가 이미 진행 중인 경우 예외 발생 -> 동시성 제어
     }
 
     // 잔액 사용에 실패한 경우에도 거래 내역을 기록
@@ -91,7 +91,8 @@ public class TransactionService {
      * 3. 거래와 계좌가 일치하지 않는 경우
      * 4. 거래 금액과 거래 취소 금액이 다른 경우
      * 5. 거래 기간이 1년을 넘은 경우
-     * 6. 해당 계좌에서 이미 다른 거래(사용/사용 취소)를 진행 중인 경우 (다른 거래 요청이 오는 경우, 해당 거래가 동시에 잘못 처리되는 것을 방지)
+     * 6. 해당 계좌에서 이미 다른 거래(사용/사용 취소)를 진행 중인 경우 -> Redis로 동시성 제어 완료
+     * (다른 거래 요청이 오는 경우, 해당 거래가 동시에 잘못 처리되는 것을 방지)
      */
     // 잔액 사용 취소
     @Transactional
@@ -121,7 +122,6 @@ public class TransactionService {
         // 5. 거래 기간이 1년을 넘은 경우
         if (transaction.getTransactedAt().isBefore(LocalDateTime.now().minusYears(1)))
             throw new AccountException(TRANSACTION_CANCELLATION_EXPIRED);
-        // 6. 해당 계좌에서 이미 다른 거래(사용/사용 취소)를 진행 중인 경우 (다른 거래 요청이 오는 경우, 해당 거래가 동시에 잘못 처리되는 것을 방지)
     }
 
     // 잔액 사용 취소에 실패한 경우에도 거래 내역을 기록

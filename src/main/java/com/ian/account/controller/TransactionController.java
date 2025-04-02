@@ -1,5 +1,6 @@
 package com.ian.account.controller;
 
+import com.ian.account.aop.AccountLock;
 import com.ian.account.dto.CancelBalance;
 import com.ian.account.dto.QueryTransactionResponse;
 import com.ian.account.dto.UseBalance;
@@ -33,9 +34,12 @@ public class TransactionController {
      * 성공: 계좌 번호, 거래 결과 코드(성공/실패), 거래 아이디, 거래 금액, 거래 일시 반환
      */
     @PostMapping("/transaction/use")
-    public UseBalance.Response useBalance(@RequestBody @Valid UseBalance.Request request) {
+    @AccountLock
+    public UseBalance.Response useBalance(@RequestBody @Valid UseBalance.Request request)
+            throws InterruptedException {
         // 잔액 사용에 성공했을 경우
         try {
+            Thread.sleep(5000L);
             return UseBalance.Response.from(transactionService.useBalance(
                     request.getUserId(), request.getAccountNumber(), request.getAmount())
             );
@@ -62,6 +66,7 @@ public class TransactionController {
      * 성공: 걔좌 번호, 거래 결과 코드(성공/실패), 거래 아이디, 거래 금액, 거래 일시
      */
     @PostMapping("/transaction/cancel")
+    @AccountLock
     public CancelBalance.Response cancelBalance(@RequestBody @Valid CancelBalance.Request request) {
         // 잔액 사용에 성공했을 경우
         try {

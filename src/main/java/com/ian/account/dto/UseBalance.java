@@ -1,5 +1,6 @@
 package com.ian.account.dto;
 
+import com.ian.account.aop.AccountLockIdInterface;
 import com.ian.account.type.TransactionResultType;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -18,7 +19,7 @@ public class UseBalance {
     @Getter
     @Setter
     @AllArgsConstructor
-    public static class Request {
+    public static class Request implements AccountLockIdInterface {
         @NotNull
         @Min(1)
         private Long userId; // 사용자 아이디

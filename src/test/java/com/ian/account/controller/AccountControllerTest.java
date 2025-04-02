@@ -6,8 +6,7 @@ import com.ian.account.dto.CreateAccount;
 import com.ian.account.dto.DeleteAccount;
 import com.ian.account.exception.AccountException;
 import com.ian.account.service.AccountService;
-import com.ian.account.service.RedisTestService;
-import com.ian.account.type.ErrorCode;
+import com.ian.account.service.LockService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,7 @@ class AccountControllerTest {
     private AccountService accountService;
 
     @Autowired
-    private RedisTestService redisTestService;
+    private LockService lockService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -140,8 +139,8 @@ class AccountControllerTest {
         }
 
         @Bean
-        public RedisTestService redisTestService() {
-            return Mockito.mock(RedisTestService.class);
+        public LockService redisTestService() {
+            return Mockito.mock(LockService.class);
         }
     }
 
