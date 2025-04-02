@@ -2,13 +2,15 @@ package com.ian.account.domain;
 
 import com.ian.account.exception.AccountException;
 import com.ian.account.type.AccountStatus;
-import com.ian.account.type.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+
+import static com.ian.account.type.ErrorCode.BALANCE_EXCEEDED;
+import static com.ian.account.type.ErrorCode.INVALID_REQUEST;
 
 /**
  *  Account: "계좌 정보"를 담고 있는 Entity 객체
@@ -40,8 +42,16 @@ public class Account extends BaseEntity {
     // 잔액 사용 시, 남은 잔액 계산
     public void useBalance(Long amount) {
         if (amount > balance)
-            throw new AccountException(ErrorCode.BALANCE_EXCEEDED);
+            throw new AccountException(BALANCE_EXCEEDED);
 
         balance -= amount;
+    }
+
+    // 잔액 사용 취소 시, 남은 잔액 계산
+    public void cancelBalance(Long amount) {
+        if (amount < 0)
+            throw new AccountException(INVALID_REQUEST);
+
+        balance += amount;
     }
 }

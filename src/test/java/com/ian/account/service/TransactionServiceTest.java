@@ -24,6 +24,7 @@ import java.util.Optional;
 import static com.ian.account.type.ErrorCode.BALANCE_EXCEEDED;
 import static com.ian.account.type.TransactionResultType.F;
 import static com.ian.account.type.TransactionResultType.S;
+import static com.ian.account.type.TransactionType.CANCEL;
 import static com.ian.account.type.TransactionType.USE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -44,6 +45,9 @@ class TransactionServiceTest {
 
     @InjectMocks
     private TransactionService transactionService;
+
+
+    ///////////////////////////////////// UseBalance /////////////////////////////////////
 
     @Test
     void useBalanceSuccess() {
@@ -253,4 +257,225 @@ class TransactionServiceTest {
         assertEquals(F, captor.getValue().getTransactionResultType());
     }
 
+
+    ///////////////////////////////////// CancelBalance /////////////////////////////////////
+
+    @Test
+    void cancelBalanceSuccess() {
+        // given
+        AccountUser accountUser = AccountUser.builder()
+                .id(12L)
+                .userName("Isaiah").build();
+
+        Account account = Account.builder()
+                .accountUser(accountUser)
+                .accountStatus(AccountStatus.ACTIVE)
+                .balance(9000L)
+                .accountNumber("1000000012").build();
+
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .amount(1000L)
+                .balanceSnapshot(9000L)
+                .transactionId("transactionId")
+                .transactionResultType(S)
+                .transactionType(USE)
+                .transactedAt(LocalDateTime.now())
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        given(accountRepository.findByAccountNumber(anyString()))
+                .willReturn(Optional.of(account));
+
+        given(transactionRepository.save(any()))
+                .willReturn(Transaction.builder()
+                        .account(account)
+                        .amount(1000L)
+                        .balanceSnapshot(10000L)
+                        .transactionId("transactionId")
+                        .transactionResultType(S)
+                        .transactionType(CANCEL)
+                        .transactedAt(LocalDateTime.now())
+                        .build()
+                );
+
+        ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
+
+        // when
+        TransactionDTO transactionDTO = transactionService
+                .cancelBalance("testTransactionId", "1234567890", 1000L);
+
+        // then
+        assertEquals(1000L, transactionDTO.getAmount());
+        assertEquals(10000L, transactionDTO.getBalanceSnapshot());
+        assertEquals("transactionId", transactionDTO.getTransactionId());
+        assertEquals(S, transactionDTO.getTransactionResultType());
+        assertEquals(CANCEL, transactionDTO.getTransactionType());
+
+        verify(transactionRepository, times(1)).save(captor.capture());
+        assertEquals(1000L, captor.getValue().getAmount());
+        assertEquals(10000L, captor.getValue().getBalanceSnapshot());
+        assertEquals(S, captor.getValue().getTransactionResultType());
+        assertEquals(CANCEL, captor.getValue().getTransactionType());
+    }
+
+    @Test
+    @DisplayName("잔액 사용 취소 시, 계좌를 찾을 수 없을 때")
+    void cancelBalance_accountNotFound() {
+        // given
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(Transaction.builder().build()));
+
+        given(accountRepository.findByAccountNumber(anyString()))
+                .willReturn(Optional.empty());
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> transactionService
+                        .cancelBalance("testTransactionId", "1111111111", 1000L));
+
+        // then
+        assertEquals(ErrorCode.ACCOUNT_NOT_FOUND, accountException.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("잔액 사용 취소 시, 해당 거래가 없을 때")
+    void cancelBalance_transactionNotFound() {
+        // given
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.empty());
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> transactionService.cancelBalance("testTransactionId", "1111111111", 1000L));
+
+        // then
+        assertEquals(ErrorCode.TRANSACTION_NOT_FOUND, accountException.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("잔액 사용 취소 시, 거래와 계좌의 정보가 다를 때")
+    void cancelBalance_transactionAccountUnMatch() {
+        // given
+        AccountUser accountUser = AccountUser.builder()
+                .id(12L)
+                .userName("Isaiah").build();
+
+        Account account1 = Account.builder()
+                .accountUser(accountUser)
+                .accountStatus(AccountStatus.ACTIVE)
+                .balance(9000L)
+                .accountNumber("1000000012").build();
+
+        Account account2 = Account.builder()
+                .accountUser(accountUser)
+                .accountStatus(AccountStatus.ACTIVE)
+                .balance(9000L)
+                .accountNumber("1000000013")
+                .build();
+
+        Transaction transaction = Transaction.builder()
+                .account(account1)
+                .amount(1000L)
+                .balanceSnapshot(9000L)
+                .transactionId("transactionId")
+                .transactionResultType(S)
+                .transactionType(USE)
+                .transactedAt(LocalDateTime.now())
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        given(accountRepository.findByAccountNumber(anyString()))
+                .willReturn(Optional.of(account2));
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> transactionService
+                        .cancelBalance("testTransactionId", "1111111111", 1000L));
+
+        // then
+        assertEquals(ErrorCode.TRANSACTION_ACCOUNT_UNMATCH, accountException.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("잔액 사용 취소 시, 거래 금액과 취소 금액이 다를 때")
+    void cancelBalance_amountMismatch() {
+        // given
+        AccountUser accountUser = AccountUser.builder()
+                .id(12L)
+                .userName("Isaiah").build();
+
+        Account account = Account.builder()
+                .accountUser(accountUser)
+                .accountStatus(AccountStatus.ACTIVE)
+                .balance(10000L)
+                .accountNumber("1000000012").build();
+
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .amount(1000L)
+                .balanceSnapshot(9000L)
+                .transactionId("transactionId")
+                .transactionResultType(S)
+                .transactionType(USE)
+                .transactedAt(LocalDateTime.now())
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        given(accountRepository.findByAccountNumber(anyString()))
+                .willReturn(Optional.of(account));
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> transactionService
+                        .cancelBalance("testTransactionId", "1111111111", 2000L));
+
+        // then
+        assertEquals(ErrorCode.AMOUNT_MISMATCH, accountException.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("잔액 사용 취소 시, 거래 취소 기간이 지났을 때")
+    void cancelBalance_tooOldToCancel() {
+        // given
+        AccountUser accountUser = AccountUser.builder()
+                .id(12L)
+                .userName("Isaiah").build();
+
+        Account account = Account.builder()
+                .accountUser(accountUser)
+                .accountStatus(AccountStatus.ACTIVE)
+                .balance(10000L)
+                .accountNumber("1000000012").build();
+
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .amount(1000L)
+                .balanceSnapshot(9000L)
+                .transactionId("transactionId")
+                .transactionResultType(S)
+                .transactionType(USE)
+                .transactedAt(LocalDateTime.now().minusYears(1).minusDays(1))
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        given(accountRepository.findByAccountNumber(anyString()))
+                .willReturn(Optional.of(account));
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> transactionService
+                        .cancelBalance("testTransactionId", "1111111111", 1000L));
+
+        // then
+        assertEquals(ErrorCode.TRANSACTION_CANCELLATION_EXPIRED, accountException.getErrorCode());
+    }
 }

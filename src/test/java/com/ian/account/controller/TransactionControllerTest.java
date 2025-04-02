@@ -1,10 +1,9 @@
 package com.ian.account.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ian.account.dto.CancelBalance;
 import com.ian.account.dto.TransactionDTO;
 import com.ian.account.dto.UseBalance;
-import com.ian.account.service.AccountService;
-import com.ian.account.service.RedisTestService;
 import com.ian.account.service.TransactionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,7 +41,7 @@ class TransactionControllerTest {
     ObjectMapper objectMapper;
 
     @Test
-    void successUseBalance() throws Exception {
+    void useBalanceSuccess() throws Exception {
         given(transactionService.useBalance(anyLong(), anyString(), anyLong()))
                 .willReturn(TransactionDTO.builder()
                         .accountNumber("1000000000")
@@ -57,6 +56,32 @@ class TransactionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new UseBalance.Request(1L, "1234567890", 1000L)
+                        )))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountNumber").value("1000000000"))
+                .andExpect(jsonPath("$.amount").value(12345L))
+                .andExpect(jsonPath("$.transactionId").value("transactionId"))
+                .andExpect(jsonPath("$.transactionResultType").value("S"))
+                .andDo(print());
+    }
+
+
+    @Test
+    void cancelBalanceSuccess() throws Exception {
+        given(transactionService.cancelBalance(anyString(), anyString(), anyLong()))
+                .willReturn(TransactionDTO.builder()
+                        .accountNumber("1000000000")
+                        .amount(12345L)
+                        .transactionId("transactionId")
+                        .transactionResultType(S)
+                        .transactedAt(LocalDateTime.now())
+                        .build()
+                );
+
+        mockMvc.perform(post("/transaction/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CancelBalance.Request("testTransactionId", "1234567890", 1000L)
                         )))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountNumber").value("1000000000"))
