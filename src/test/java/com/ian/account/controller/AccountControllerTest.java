@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ian.account.dto.AccountDTO;
 import com.ian.account.dto.CreateAccount;
 import com.ian.account.dto.DeleteAccount;
+import com.ian.account.exception.AccountException;
 import com.ian.account.service.AccountService;
 import com.ian.account.service.RedisTestService;
+import com.ian.account.type.ErrorCode;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.ian.account.type.ErrorCode.ACCOUNT_NOT_FOUND;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -112,6 +115,21 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.accountNumber").value("1234567890"))
                 .andDo(print());
     }
+
+
+    @Test
+    void errorTest() throws Exception {
+        given(accountService.getAccountsByUserId(anyLong()))
+                .willThrow(new AccountException(ACCOUNT_NOT_FOUND));
+
+
+        mockMvc.perform(get("/account?userId=123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errorCode").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.errorMessage").value("계좌를 찾을 수 없습니다."))
+                .andDo(print());
+    }
+
 
     // mock bean 수동 등록
     @TestConfiguration
