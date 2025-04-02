@@ -28,10 +28,9 @@ public class AccountService {
      */
     // 계좌 확인
     @Transactional
-    public List<AccountDTO> getAccountsByUserId(Long id) {
+    public List<AccountDTO> getAccountsByUserId(Long userId) {
         // 사용자가 없는 경우 예외 발생
-        AccountUser accountUser = accountUserRepository.findById(id)
-                .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
+        AccountUser accountUser = getAccountUser(userId);
 
         List<Account> accounts = accountRepository.findByAccountUser(accountUser);
 
@@ -50,8 +49,7 @@ public class AccountService {
     @Transactional
     public AccountDTO createAccount(Long userId, Long initialBalance) {
         // 1. 사용자가 없는 경우 예외 발생
-        AccountUser accountUser = accountUserRepository.findById(userId)
-                .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
+        AccountUser accountUser = getAccountUser(userId);
         // 2. 보유 계좌가 10개 이상인 경우 예외 발생
         validateCreateAccount(accountUser);
 
@@ -92,8 +90,7 @@ public class AccountService {
     @Transactional
     public AccountDTO deleteAccount(Long userId, String accountNumber) {
         // 1-1. 사용자가 없는 경우 예외 발생
-        AccountUser accountUser = accountUserRepository.findById(userId)
-                .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
+        AccountUser accountUser = getAccountUser(userId);
         // 1-2. 계좌가 없는 경우 예외 발생
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
@@ -117,6 +114,14 @@ public class AccountService {
         // 4. 계좌에 잔액이 남아있는 경우 예외 발생
         if (account.getBalance() > 0)
             throw new AccountException(ACCOUNT_HAS_BALANCE);
+    }
+
+
+    // 사용자가 없는 경우
+    private AccountUser getAccountUser(Long userId) {
+        AccountUser accountUser = accountUserRepository.findById(userId)
+                .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
+        return accountUser;
     }
 
 }
