@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.ian.account.type.ErrorCode.BALANCE_EXCEEDED;
+import static com.ian.account.type.ErrorCode.TRANSACTION_NOT_FOUND;
 import static com.ian.account.type.TransactionResultType.F;
 import static com.ian.account.type.TransactionResultType.S;
 import static com.ian.account.type.TransactionType.CANCEL;
@@ -477,5 +478,58 @@ class TransactionServiceTest {
 
         // then
         assertEquals(ErrorCode.TRANSACTION_CANCELLATION_EXPIRED, accountException.getErrorCode());
+    }
+
+
+    ///////////////////////////////////// GetTransaction /////////////////////////////////////
+
+    @Test
+    void getTransactionSuccess() {
+        // given
+        AccountUser accountUser = AccountUser.builder()
+                .id(12L)
+                .userName("Isaiah").build();
+
+        Account account = Account.builder()
+                .accountUser(accountUser)
+                .accountStatus(AccountStatus.ACTIVE)
+                .balance(10000L)
+                .accountNumber("1000000012").build();
+
+        Transaction transaction = Transaction.builder()
+                .account(account)
+                .amount(1000L)
+                .balanceSnapshot(9000L)
+                .transactionId("transactionId")
+                .transactionResultType(S)
+                .transactionType(USE)
+                .transactedAt(LocalDateTime.now())
+                .build();
+
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.of(transaction));
+
+        // when
+        TransactionDTO transactionDTO = transactionService.queryTransaction("testTransactionId");
+
+        // then
+        assertEquals(1000, transactionDTO.getAmount());
+        assertEquals("transactionId", transactionDTO.getTransactionId());
+        assertEquals(USE, transactionDTO.getTransactionType());
+        assertEquals(S, transactionDTO.getTransactionResultType());
+    }
+
+    @Test
+    void getTransactionFailed() {
+        // given
+        given(transactionRepository.findByTransactionId(anyString()))
+                .willReturn(Optional.empty());
+
+        // when
+        AccountException accountException = assertThrows(AccountException.class,
+                () -> transactionService.queryTransaction("testTransactionId"));
+
+        // then
+        assertEquals(TRANSACTION_NOT_FOUND, accountException.getErrorCode());
     }
 }

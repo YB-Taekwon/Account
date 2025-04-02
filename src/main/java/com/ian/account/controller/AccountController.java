@@ -35,7 +35,7 @@ public class AccountController {
      * 성공: List<계좌 번호, 잔액> 구조로 반환 (단, 사용 중인 계좌만)
      */
     @GetMapping("/account")
-    public List<AccountInfo> getAccountsByUserId(Long userId) {
+    public List<AccountInfo> getAccountsByUserId(@RequestParam Long userId) {
         return accountService.getAccountsByUserId(userId).stream()
                 .map(accountDTO -> AccountInfo.builder()
                         .accountNumber(accountDTO.getAccountNumber())

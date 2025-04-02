@@ -150,4 +150,16 @@ public class TransactionService {
         ));
     }
 
+
+    /**
+     * 실패 케이스
+     * 거래 아이디에 해당하는 거래가 없는 경우
+     */
+    // 잔액 사용 확인
+    @Transactional
+    public TransactionDTO queryTransaction(String transactionId) {
+        // 거래 아이디에 해당하는 거래가 없는 경우 예외 발생
+        return TransactionDTO.fromEntity(transactionRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new AccountException(TRANSACTION_NOT_FOUND)));
+    }
 }

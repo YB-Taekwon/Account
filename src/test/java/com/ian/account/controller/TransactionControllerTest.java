@@ -1,9 +1,7 @@
 package com.ian.account.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ian.account.dto.CancelBalance;
-import com.ian.account.dto.TransactionDTO;
-import com.ian.account.dto.UseBalance;
+import com.ian.account.dto.*;
 import com.ian.account.service.TransactionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,10 +16,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 
 import static com.ian.account.type.TransactionResultType.S;
+import static com.ian.account.type.TransactionType.USE;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -89,6 +88,29 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.transactionId").value("transactionId"))
                 .andExpect(jsonPath("$.transactionResultType").value("S"))
                 .andDo(print());
+    }
+
+
+    @Test
+    void getTransactionsTest() throws Exception {
+        given(transactionService.queryTransaction(anyString()))
+                .willReturn(TransactionDTO.builder()
+                        .accountNumber("1234567890")
+                        .amount(1000L)
+                        .transactionId("transactionId")
+                        .transactionType(USE)
+                        .transactionResultType(S)
+                        .transactedAt(LocalDateTime.now())
+                        .build()
+                );
+
+        mockMvc.perform(get("/transaction/testTransactionId"))
+                .andDo(print())
+                .andExpect(jsonPath("$.accountNumber").value("1234567890"))
+                .andExpect(jsonPath("$.amount").value("1000"))
+                .andExpect(jsonPath("$.transactionId").value("transactionId"))
+                .andExpect(jsonPath("$.transactionType").value("USE"))
+                .andExpect(jsonPath("$.transactionResultType").value("S"));
     }
 
 
